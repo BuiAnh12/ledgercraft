@@ -28,3 +28,20 @@ psql-dwh:
 	docker exec -it lc-dwh-postgres \
 	psql -U $(shell grep DWH_USER $(ENV) | cut -d= -f2) \
 	     -d $(shell grep DWH_DB $(ENV) | cut -d= -f2)
+
+# migrate-oltp:
+# 	docker exec -it lc-oltp-postgres \
+# 	psql -U $(shell grep OLTP_USER $(ENV) | cut -d= -f2) \
+# 	     -d $(shell grep OLTP_DB $(ENV) | cut -d= -f2)
+# 	     -v ON_ERROR_STOP=1 \
+# 	     -f /app/warehouse/ddl/oltp.sql
+
+migrate-oltp:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-oltp-postgres \
+	psql -U $$OLTP_USER -d $$OLTP_DB -v ON_ERROR_STOP=1 \
+	-f /app/warehouse/ddl/oltp.sql
+
+seed-data:
+	python3 seed/generator.py --customers 200 --max-accounts-per-customer 2
+

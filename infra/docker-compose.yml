@@ -11,6 +11,7 @@ services:
       - "${OLTP_PORT}:5432"
     volumes:
       - oltp_pgdata:/var/lib/postgresql/data
+      - ../:/app
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${OLTP_USER} -d ${OLTP_DB}"]
       interval: 5s
