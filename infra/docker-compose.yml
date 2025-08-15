@@ -1,0 +1,60 @@
+services:
+  # Docker for 
+  oltp-postgres:
+    image: postgres:16-alpine
+    container_name: lc-oltp-postgres
+    environment:
+      POSTGRES_DB: ${OLTP_DB}
+      POSTGRES_USER: ${OLTP_USER}
+      POSTGRES_PASSWORD: ${OLTP_PASSWORD}
+    ports:
+      - "${OLTP_PORT}:5432"
+    volumes:
+      - oltp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OLTP_USER} -d ${OLTP_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  # Docker for data warehouse (DWH) PostgreSQL service
+  dwh-postgres:
+    image: postgres:16-alpine
+    container_name: lc-dwh-postgres
+    environment:
+      POSTGRES_DB: ${DWH_DB}
+      POSTGRES_USER: ${DWH_USER}
+      POSTGRES_PASSWORD: ${DWH_PASSWORD}
+    ports:
+      - "${DWH_PORT}:5432"
+    volumes:
+      - dwh_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DWH_USER} -d ${DWH_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: lc-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # (Optional) DB UI for quick inspection
+  adminer:
+    image: adminer:4
+    container_name: lc-adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - oltp-postgres
+      - dwh-postgres
+
+volumes:
+  oltp_pgdata:
+  dwh_pgdata:
