@@ -45,3 +45,6 @@ migrate-oltp:
 seed-data:
 	python3 seed/generator.py --customers 200 --max-accounts-per-customer 2
 
+ingest:
+	cd services/ingest_api && uvicorn app.main:app --reload --port 8001
+
