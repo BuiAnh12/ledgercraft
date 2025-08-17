@@ -12,6 +12,14 @@ services:
     volumes:
       - oltp_pgdata:/var/lib/postgresql/data
       - ../:/app
+    command: # Setup WAL for PG with enough repl slot & sender to Debezium
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_wal_senders=10"
+      - "-c"
+      - "max_replication_slots=10"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${OLTP_USER} -d ${OLTP_DB}"]
       interval: 5s
@@ -55,6 +63,82 @@ services:
     depends_on:
       - oltp-postgres
       - dwh-postgres
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: lc-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: lc-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Two listeners: one for containers (kafka:9092), one for host (localhost:29092)
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:${KAFKA_BROKER_HOST_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    ports:
+      - "${KAFKA_BROKER_HOST_PORT}:29092"
+      - "9092:9092"  # internal; useful for container-to-container tools
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.1
+    container_name: lc-schema-registry
+    depends_on:
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "${SCHEMA_REGISTRY_HOST_PORT}:8081"
+
+  kafka-connect:
+    # Debezium's Connect image includes Debezium connectors; we'll start with JSON converters.
+    image: debezium/connect:2.7.0.Final
+    container_name: lc-kafka-connect
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      STATUS_STORAGE_TOPIC: connect_status
+      # Use JSON for simplicity first; Avro switch later by setting these to AvroConverter + SCHEMA_REGISTRY_URL
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "true"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+      # REST
+      REST_ADVERTISED_HOST_NAME: kafka-connect
+      REST_PORT: 8083
+    ports:
+      - "${KAFKA_CONNECT_HOST_PORT}:8083"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: lc-kafka-ui
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+    ports:
+      - "${KAFKA_UI_HOST_PORT}:8080"
 
 volumes:
   oltp_pgdata:

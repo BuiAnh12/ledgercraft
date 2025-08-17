@@ -52,3 +52,21 @@ seed-data:
 ingest:
 	cd services/ingest_api && uvicorn app.main:app --reload --port 8001
 
+kafka-shell:
+	docker exec -it lc-kafka bash
+
+topics:
+	docker exec -it lc-kafka kafka-topics --bootstrap-server kafka:9092 --list
+
+topic-create:
+	docker exec -it lc-kafka kafka-topics --bootstrap-server kafka:9092 --create --topic $(T) --partitions 1 --replication-factor 1
+
+produce:
+	@echo "Type messages, Ctrl+C to stop"
+	docker exec -it lc-kafka bash -lc 'kafka-console-producer --broker-list kafka:9092 --topic $(T)'
+
+consume:
+	docker exec -it lc-kafka bash -lc 'kafka-console-consumer --bootstrap-server kafka:9092 --topic $(T) --from-beginning --timeout-ms 0'
+
+connectors:
+	curl -s http://localhost:${KAFKA_CONNECT_HOST_PORT}/connectors | jq
