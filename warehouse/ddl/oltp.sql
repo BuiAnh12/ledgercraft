@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS outbox (
 );
 CREATE INDEX IF NOT EXISTS idx_outbox_created ON outbox(created_at);
 
--- ---------- (Prep) Idempotency (used in Lesson 4) ----------
+-- ---------- Idempotency ----------
 CREATE TABLE IF NOT EXISTS idempotency (
   id             BIGSERIAL PRIMARY KEY,
   endpoint       TEXT NOT NULL,
@@ -106,3 +106,20 @@ CREATE TABLE IF NOT EXISTS idempotency (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(endpoint, idem_key)
 );
+
+
+-- ---------- Create the Debezium DB user & grants ----------
+
+-- 1) Create the Debezium user (dev-only: superuser for simplicity)
+DO $$BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'debezium') THEN
+    CREATE ROLE debezium WITH LOGIN SUPERUSER PASSWORD 'debezium';
+  END IF;
+END$$;
+
+-- 2) (Optional hardening for non-superuser setups)
+GRANT CONNECT ON DATABASE ledgercraft_oltp TO debezium;
+GRANT USAGE ON SCHEMA public TO debezium;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO debezium;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO debezium;
+

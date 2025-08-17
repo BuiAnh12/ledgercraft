@@ -40,33 +40,46 @@ psql-dwh:
 # 	     -v ON_ERROR_STOP=1 \
 # 	     -f /app/warehouse/ddl/oltp.sql
 
+# Migrate schema from /app/warehouse/ddl/oltp.sql
 migrate-oltp:
 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
 	docker exec -i lc-oltp-postgres \
 	psql -U $$OLTP_USER -d $$OLTP_DB -v ON_ERROR_STOP=1 \
 	-f /app/warehouse/ddl/oltp.sql
 
+# Create seed user and account
 seed-data:
 	python3 seed/generator.py --customers 200 --max-accounts-per-customer 2
-
+# Create tester user and account
 ingest:
 	cd services/ingest_api && uvicorn app.main:app --reload --port 8001
-
+# Open CLI for kafka
 kafka-shell:
 	docker exec -it lc-kafka bash
-
+# List kafka topics
 topics:
 	docker exec -it lc-kafka kafka-topics --bootstrap-server kafka:9092 --list
-
+# Create demo topic
 topic-create:
 	docker exec -it lc-kafka kafka-topics --bootstrap-server kafka:9092 --create --topic $(T) --partitions 1 --replication-factor 1
-
+# Produce demo topic
 produce:
 	@echo "Type messages, Ctrl+C to stop"
 	docker exec -it lc-kafka bash -lc 'kafka-console-producer --broker-list kafka:9092 --topic $(T)'
-
+# Consume demo toppic
 consume:
 	docker exec -it lc-kafka bash -lc 'kafka-console-consumer --bootstrap-server kafka:9092 --topic $(T) --from-beginning --timeout-ms 0'
-
+# Check connector 
 connectors:
 	curl -s http://localhost:${KAFKA_CONNECT_HOST_PORT}/connectors | jq
+# Register connecter
+connect-register:
+	curl -s -X POST -H "Content-Type: application/json" \
+	  --data @infra/kafka-connect/debezium-postgres-source.json \
+	  http://localhost:${KAFKA_CONNECT_HOST_PORT}/connectors | jq
+# Check debezium connecter status
+connect-status:
+	curl -s http://localhost:${KAFKA_CONNECT_HOST_PORT}/connectors/debezium-postgres-source/status | jq
+# Delete debezium connecter
+connect-delete:
+	curl -s -X DELETE http://localhost:${KAFKA_CONNECT_HOST_PORT}/connectors/debezium-postgres-source | jq

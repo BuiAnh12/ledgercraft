@@ -1,0 +1,25 @@
+{
+    "name": "debezium-postgres-source",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.hostname": "oltp-postgres",
+        "database.port": "5432",
+        "database.user": "debezium",
+        "database.password": "debezium",
+        "database.dbname": "ledgercraft_oltp",
+        "slot.name": "debezium_slot",
+        "publication.autocreate.mode": "filtered",
+        "table.include.list": "public.customers,public.accounts,public.transactions,public.outbox",
+        "topic.prefix": "txn",
+        "tombstones.on.delete": "false",
+        "plugin.name": "pgoutput",
+        "decimal.handling.mode": "string",
+        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "key.converter.schemas.enable": "true",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter.schemas.enable": "true",
+        "transforms": "unwrap",
+        "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+        "transforms.unwrap.add.headers": "op,ts_ms"
+    }
+}
