@@ -5,8 +5,12 @@ ENV ?= $(CURDIR)/.env
 up:
 	docker compose --env-file $(ENV) -f infra/docker-compose.yml up -d
 
-# Tear down the stack and remove volumes
+# Tear down the stack (keep volumes/data)
 down:
+	docker compose --env-file $(ENV) -f infra/docker-compose.yml down
+
+# Tear down the stack and remove volumes
+reset:
 	docker compose --env-file $(ENV) -f infra/docker-compose.yml down -v
 
 # Show running containers

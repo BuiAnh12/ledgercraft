@@ -8,6 +8,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import CITEXT, UUID as PG_UUID
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
+from sqlalchemy import UniqueConstraint
 
 Base = declarative_base()
 
@@ -79,3 +80,23 @@ class Transaction(Base):
     settled_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
 
     account: Mapped[Account] = relationship(back_populates="transactions")
+
+class Outbox(Base):
+    __tablename__ = "outbox"
+    id = mapped_column(PG_UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    aggregate_type: Mapped[str] = mapped_column(Text, nullable=False)
+    aggregate_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    event_type: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_json = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"))
+
+class Idempotency(Base):
+    __tablename__ = "idempotency"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    endpoint: Mapped[str] = mapped_column(Text, nullable=False)
+    idem_key: Mapped[str] = mapped_column(Text, nullable=False)
+    request_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    response_code: Mapped[int | None] = mapped_column()
+    response_body = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=text("NOW()"))
+    __table_args__ = (UniqueConstraint("endpoint", "idem_key", name="idempotency_endpoint_idem_key"),)
