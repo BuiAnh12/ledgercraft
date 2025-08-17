@@ -46,11 +46,15 @@ migrate-oltp:
 	docker exec -i lc-oltp-postgres \
 	psql -U $$OLTP_USER -d $$OLTP_DB -v ON_ERROR_STOP=1 \
 	-f /app/warehouse/ddl/oltp.sql
+# Migrate risk schema
+migrate-oltp-risk:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-oltp-postgres psql -U $$OLTP_USER -d $$OLTP_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/oltp_risk_flags.sql
 
 # Create seed user and account
 seed-data:
 	python3 seed/generator.py --customers 200 --max-accounts-per-customer 2
-# Create tester user and account
+# Run the API Backend which recieve request of create txn and ect
 ingest:
 	cd services/ingest_api && uvicorn app.main:app --reload --port 8001
 # Open CLI for kafka

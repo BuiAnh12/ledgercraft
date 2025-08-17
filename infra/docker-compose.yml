@@ -139,7 +139,31 @@ services:
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
     ports:
       - "${KAFKA_UI_HOST_PORT}:8080"
-
+  stream:
+    image: python:3.11-slim
+    container_name: lc-stream
+    working_dir: /app/services/stream
+    # command: bash -lc "pip install -r requirements.txt && faust -A faust_app worker -l info"
+    command: bash -lc "pip install -r requirements.txt && faust -A faust_app worker -l debug"
+        
+    env_file:
+      - ../.env
+    environment:
+      KAFKA_BROKER_URL: kafka://kafka:9092
+      OLTP_HOST: oltp-postgres
+      OLTP_PORT: ${OLTP_PORT}
+      OLTP_DB: ${OLTP_DB}
+      OLTP_USER: ${OLTP_USER}
+      OLTP_PASSWORD: ${OLTP_PASSWORD}
+      VELOCITY_WINDOW_SECONDS: 300
+      VELOCITY_COUNT_THRESHOLD: 5
+      VELOCITY_SUM_THRESHOLD_VND: 2000000
+      VELOCITY_SUM_THRESHOLD_USD: 100
+    depends_on:
+      - kafka
+      - oltp-postgres
+    volumes:
+      - ../:/app
 volumes:
   oltp_pgdata:
   dwh_pgdata:
