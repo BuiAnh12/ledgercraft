@@ -37,6 +37,8 @@ services:
       - "${DWH_PORT}:5432"
     volumes:
       - dwh_pgdata:/var/lib/postgresql/data
+      - ../:/app
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DWH_USER} -d ${DWH_DB}"]
       interval: 5s
