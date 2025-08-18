@@ -21,7 +21,11 @@ ledgercraft
 │  └─ prometheus
 ├─ pipelines
 │  ├─ airflow
-│  │  └─ .keep
+│  │  ├─ .keep
+│  │  ├─ dags
+│  │  │  └─ oltp_to_stg.py
+│  │  ├─ logs
+│  │  └─ plugins
 │  ├─ dbt
 │  │  └─ .keep
 │  └─ ge
@@ -58,10 +62,17 @@ ledgercraft
 │     ├─ config.py
 │     ├─ db.py
 │     ├─ faust_app.py
+│     ├─ lc-stream-data
+│     │  └─ v1
+│     │     └─ tables
 │     └─ requirements.txt
+├─ start.bash
 └─ warehouse
    ├─ ddl
    │  ├─ .keep
+   │  ├─ dwh_curated.sql
+   │  ├─ dwh_dev_bootstrap.sql
+   │  ├─ dwh_staging.sql
    │  ├─ oltp.sql
    │  └─ oltp_risk_flags.sql
    └─ views

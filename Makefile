@@ -60,6 +60,11 @@ migrate-oltp-risk:
 migrate-dwh-cur:
 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
 	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/dwh_curated.sql
+# Migrate schema for stage
+migrate-dwh-stg:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/dwh_staging.sql
+
 # Create Boostrap Data
 dwh-dev-bootstrap:
 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
