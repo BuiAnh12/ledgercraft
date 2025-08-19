@@ -1,0 +1,39 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "stg.customers.suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "id" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": { "column": "id" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "email" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": { "column": "country", "regex": "^[A-Z]{2}$" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": { "column": "kyc_level", "min_value": 0, "max_value": 3, "mostly": 1.0 }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": { "column": "risk_band", "value_set": ["LOW", "MEDIUM", "HIGH"] }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "created_at" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "updated_at" }
+    }
+  ],
+  "meta": { "great_expectations_version": "0.18.22" }
+}

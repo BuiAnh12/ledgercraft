@@ -5,6 +5,15 @@ from airflow.decorators import task
 from airflow.hooks.base import BaseHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from psycopg2.extras import execute_values, Json
+from airflow.operators.python import PythonOperator
+from gx_validate import (
+    validate_stg_customers,
+    validate_stg_accounts,
+    validate_stg_transactions,
+    check_fk_transactions_accounts,
+)
+
+
 
 DEFAULT_ARGS = {"owner": "data", "retries": 0}
 TABLES = [
@@ -91,6 +100,7 @@ with DAG(
     catchup=False,
     tags=["staging","postgres"],
 ) as dag:
+    
 
     @task
     def ensure_staging_objects():
@@ -123,3 +133,30 @@ with DAG(
         t = load_table.override(task_id=f"load_{name}")(name, pk, created_col)
         ensure >> t
         logs.append(t)
+    
+    # validate_customers = PythonOperator(
+    #     task_id="validate_stg_customers",
+    #     python_callable=validate_stg_customers,
+    #     dag=dag,
+    #     )
+
+    # validate_accounts = PythonOperator(
+    #     task_id="validate_stg_accounts",
+    #     python_callable=validate_stg_accounts,
+    #     dag=dag,
+    # )
+
+    # validate_transactions = PythonOperator(
+    #     task_id="validate_stg_transactions",
+    #     python_callable=validate_stg_transactions,
+    #     dag=dag,
+    # )
+
+    # check_fk_tx_accounts = PythonOperator(
+    #     task_id="check_fk_transactions_accounts",
+    #     python_callable=check_fk_transactions_accounts,
+    #     dag=dag,
+    # )
+    # logs[0] >> validate_customers
+    # logs[1] >> validate_accounts
+    # logs[2] >> validate_transactions >> check_fk_tx_accounts

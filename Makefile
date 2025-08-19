@@ -13,6 +13,10 @@ down:
 reset:
 	docker compose --env-file $(ENV) -f infra/docker-compose.yml down -v
 
+# Build the service
+build:
+	docker compose --env-file $(ENV) -f infra/docker-compose.yml build
+
 # Show running containers
 ps:
 	docker compose --env-file $(ENV) -f infra/docker-compose.yml ps

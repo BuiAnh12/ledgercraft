@@ -182,7 +182,9 @@ services:
       retries: 10
 
   airflow-init:
-    image: apache/airflow:2.9.2
+    build:
+      context: ..
+      dockerfile: pipelines/airflow/Dockerfile
     depends_on:
       - airflow-postgres
     entrypoint: /bin/bash
@@ -199,6 +201,7 @@ services:
       - ../pipelines/airflow/dags:/opt/airflow/dags
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
+      - ../gx:/opt/airflow/dags/great_expectations
     command: >
       -c "pip install apache-airflow-providers-postgres==5.8.0 psycopg2-binary==2.9.9 &&
           airflow db init &&
@@ -207,7 +210,9 @@ services:
           airflow connections add dwh_postgres  --conn-uri 'postgres://${DWH_USER}:${DWH_PASSWORD}@lc-dwh-postgres:5432/${DWH_DB}'"
 
   airflow-webserver:
-    image: apache/airflow:2.9.2
+    build:
+      context: ..
+      dockerfile: pipelines/airflow/Dockerfile
     container_name: lc-airflow-web
     depends_on:
       - airflow-postgres
@@ -217,6 +222,7 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW_UID: ${AIRFLOW_UID}
       AIRFLOW_GID: ${AIRFLOW_GID}
+      DWH_GE_URL: postgresql://${DWH_USER}:${DWH_PASSWORD}@lc-dwh-postgres:5432/${DWH_DB}
     command: webserver
     ports:
       - "${AIRFLOW_WEB_PORT}:8080"
@@ -224,9 +230,12 @@ services:
       - ../pipelines/airflow/dags:/opt/airflow/dags
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
+      - ../gx:/opt/airflow/dags/great_expectations
 
   airflow-scheduler:
-    image: apache/airflow:2.9.2
+    build:
+      context: ..
+      dockerfile: pipelines/airflow/Dockerfile
     container_name: lc-airflow-scheduler
     depends_on:
       - airflow-postgres
@@ -235,14 +244,18 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW_UID: ${AIRFLOW_UID}
       AIRFLOW_GID: ${AIRFLOW_GID}
+      DWH_GE_URL: postgresql://${DWH_USER}:${DWH_PASSWORD}@lc-dwh-postgres:5432/${DWH_DB}
     command: scheduler
     volumes:
       - ../pipelines/airflow/dags:/opt/airflow/dags
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
+      - ../gx:/opt/airflow/dags/great_expectations
 
   airflow-triggerer:
-    image: apache/airflow:2.9.2
+    build:
+      context: ..
+      dockerfile: pipelines/airflow/Dockerfile
     container_name: lc-airflow-triggerer
     depends_on:
       - airflow-postgres
@@ -256,6 +269,7 @@ services:
       - ../pipelines/airflow/dags:/opt/airflow/dags
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
+      - ../gx:/opt/airflow/dags/great_expectations
 
 volumes:
   oltp_pgdata:

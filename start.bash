@@ -34,12 +34,14 @@ if [ "$status" == "RUNNING" ]; then
 else
   echo "Connector not present or not healthy. Registering..."
   make connect-register P=$CONNECTOR_PORT || true
+
+  echo "Waiting for connector to become RUNNING 3s..."
+  sleep 3
   status=$(make connect-status P=$CONNECTOR_PORT | jq -r '.connector.state')
   if [ "$status" == "RUNNING" ]; then
     echo "Connector is RUNNING ✅"
   else
-    echo "Connector status is $status ❌"
-    echo "Fix connector before starting ingest."
+    echo "Connector failed to become RUNNING within 60s ❌"
     exit 1
   fi
 fi

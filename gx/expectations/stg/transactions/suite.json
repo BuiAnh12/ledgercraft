@@ -1,0 +1,54 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "stg.transactions.suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "id" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": { "column": "id" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "account_id" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": { "column": "type", "value_set": ["PAYMENT", "TRANSFER_IN", "TRANSFER_OUT", "REFUND", "FEE"] }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": { "column": "status", "value_set": ["PENDING", "SETTLED", "DECLINED", "REVERSED", "CHARGEBACK"] }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": { "column": "currency", "regex": "^[A-Z]{3}$" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": { "column": "country", "regex": "^[A-Z]{2}$" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_greater_than",
+      "kwargs": { "column": "amount", "value": 0 }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "created_at" }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "created_at",
+        "max_value": "now", 
+        "parse_strings_as_datetimes": true
+      },
+      "meta": {
+        "note": "Approximation of Airflow code: created_at <= now()+120s. GX can't handle 'now+2min' directly in JSON, so this is simplified."
+      }
+    }
+  ],
+  "meta": { "great_expectations_version": "0.18.22" }
+}

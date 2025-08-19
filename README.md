@@ -23,9 +23,10 @@ ledgercraft
 │  ├─ airflow
 │  │  ├─ .keep
 │  │  ├─ dags
+│  │  │  ├─ gx_validate.py
 │  │  │  └─ oltp_to_stg.py
-│  │  ├─ logs
-│  │  └─ plugins
+│  │  ├─ plugins
+│  │  └─ requirements.txt
 │  ├─ dbt
 │  │  └─ .keep
 │  └─ ge
