@@ -202,6 +202,8 @@ services:
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
       - ../gx:/opt/airflow/dags/great_expectations
+      - ../warehouse/ddl/dwh_curated_functions.sql:/opt/airflow/sql/dwh_curated_functions.sql
+
     command: >
       -c "pip install apache-airflow-providers-postgres==5.8.0 psycopg2-binary==2.9.9 &&
           airflow db init &&
@@ -231,6 +233,7 @@ services:
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
       - ../gx:/opt/airflow/dags/great_expectations
+      - ../warehouse/ddl/dwh_curated_functions.sql:/opt/airflow/sql/dwh_curated_functions.sql
 
   airflow-scheduler:
     build:
@@ -251,6 +254,8 @@ services:
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
       - ../gx:/opt/airflow/dags/great_expectations
+      - ../warehouse/ddl/dwh_curated_functions.sql:/opt/airflow/sql/dwh_curated_functions.sql
+
 
   airflow-triggerer:
     build:
@@ -270,6 +275,7 @@ services:
       - ../pipelines/airflow/logs:/opt/airflow/logs
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
       - ../gx:/opt/airflow/dags/great_expectations
+      - ../warehouse/ddl/dwh_curated_functions.sql:/opt/airflow/sql/dwh_curated_functions.sql
 
 volumes:
   oltp_pgdata:

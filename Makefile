@@ -36,6 +36,15 @@ psql-oltp-nonint:
 	@docker exec -i lc-oltp-postgres \
 	psql -U $(shell grep OLTP_USER $(ENV) | cut -d= -f2) \
 	     -d $(shell grep OLTP_DB $(ENV) | cut -d= -f2) -tAc "$$SQL"
+
+
+# Connect to OLTP Posgres and run script
+psql-dw-nonint:
+	@docker exec -i lc-dwh-postgres \
+	psql -U $(shell grep DWH_USER $(ENV) | cut -d= -f2) \
+	     -d $(shell grep DWH_DB $(ENV) | cut -d= -f2) -tAc "$$SQL"
+
+
 		 
 # Connect to DWH Postgres
 psql-dwh:
@@ -68,6 +77,27 @@ migrate-dwh-cur:
 migrate-dwh-stg:
 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
 	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/dwh_staging.sql
+migrate-dwh-cur-funcs:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/dwh_curated_functions.sql
+migrate-dwh-mviews:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/dwh_mviews.sql
+
+refresh-mv:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -c "REFRESH MATERIALIZED VIEW CONCURRENTLY cur.mv_gmv_daily_currency; REFRESH MATERIALIZED VIEW cur.mv_top_merchants_7d;"
+
+# Migrate full db service
+migrate-oltp-full:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-oltp-postgres \
+	psql -U $$OLTP_USER -d $$OLTP_DB -v ON_ERROR_STOP=1 \
+	-f /app/warehouse/ddl/oltp/oltp_full.sql
+migrate-dwh-cur:
+	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 \
+	-f /app/warehouse/ddl/dw/dw_full.sql
 
 # Create Boostrap Data
 dwh-dev-bootstrap:

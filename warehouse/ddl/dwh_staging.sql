@@ -1,4 +1,5 @@
 CREATE SCHEMA IF NOT EXISTS stg;
+CREATE EXTENSION IF NOT EXISTS citext;    -- case-insensitive text (email)
 
 -- Watermarks for incremental loads
 CREATE TABLE IF NOT EXISTS stg.etl_watermarks (
