@@ -287,6 +287,7 @@ services:
       READ_API_CORS: "http://localhost:3000"  # Next.js dev origin
       DWH_DSN: postgresql://${DWH_USER}:${DWH_PASSWORD}@lc-dwh-postgres:5432/${DWH_DB} # behind the screen it run the same inside port like oltp
       OLTP_DSN: postgresql://${OLTP_USER}:${OLTP_PASSWORD}@oltp-postgres:${OLTP_PORT}/${OLTP_DB}
+      READ_API_KEY: ${READ_API_KEY}
     depends_on:
       - dwh-postgres
       - oltp-postgres

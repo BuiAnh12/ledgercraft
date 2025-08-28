@@ -3,6 +3,7 @@ import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 DAG_ID = "curated_load"
 
@@ -189,11 +190,17 @@ with DAG(
     default_args={"owner": "data", "retries": 0},
     tags=["curated","dwh","scd2"],
 ) as dag:
-
     t0 = PythonOperator(task_id="ensure_funcs_and_partitions", python_callable=ensure_funcs_and_partitions)
     d1 = PythonOperator(task_id="upsert_dim_customer", python_callable=upsert_dim_customer)
     d2 = PythonOperator(task_id="upsert_dim_account",  python_callable=upsert_dim_account)
     d3 = PythonOperator(task_id="upsert_dim_merchant", python_callable=upsert_dim_merchant)
     f1 = PythonOperator(task_id="load_fact_transactions", python_callable=load_fact_transactions)
-
-    t0 >> [d1, d2, d3] >> f1
+    refresh_mvs = PostgresOperator(
+    task_id="refresh_materialized_views",
+    postgres_conn_id="dwh_postgres",
+    sql="""
+      REFRESH MATERIALIZED VIEW cur.mv_gmv_daily_currency;
+      REFRESH MATERIALIZED VIEW cur.mv_top_merchants_7d;
+    """,
+    )
+    t0 >> [d1, d2, d3] >> f1 >> refresh_mvs

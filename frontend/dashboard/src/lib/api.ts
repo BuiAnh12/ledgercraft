@@ -1,4 +1,4 @@
-const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8002";
+const base = process.env.FRONTEND_BASE_URL
 
 export type GMVPoint = { day_utc: string; currency: string; tx_count: number; total_amount: string };
 export type MerchantRow = { merchant_name_norm: string; tx_count: number; total_amount: string };
@@ -9,7 +9,7 @@ export type RiskFlag = {
 };
 
 export async function fetchGMV(currency = "VND", days = 30, options: RequestInit = {}) {
-  const res = await fetch(`${base}/gmv/daily?currency=${currency}&days=${days}`, {
+  const res = await fetch(`${base}/api/gmv?currency=${currency}&days=${days}`, {
     ...options,
     // Revalidate every 60s on the server
     next: { revalidate: 60 },
@@ -19,7 +19,7 @@ export async function fetchGMV(currency = "VND", days = 30, options: RequestInit
 }
 
 export async function fetchTopMerchants(limit = 10, options: RequestInit = {}) {
-  const res = await fetch(`${base}/merchants/top?limit=${limit}`, {
+  const res = await fetch(`${base}/api/merchants?limit=${limit}`, {
     ...options,
     next: { revalidate: 120 },
   });
@@ -29,7 +29,7 @@ export async function fetchTopMerchants(limit = 10, options: RequestInit = {}) {
 
 // Client-side polling for risk flags
 export async function fetchRiskFlags(hours = 1) {
-  const res = await fetch(`${base}/risk/flags?hours=${hours}`, { cache: "no-store" });
+  const res = await fetch(`/api/flags?hours=${hours}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch risk flags");
   return (await res.json()) as RiskFlag[];
 }

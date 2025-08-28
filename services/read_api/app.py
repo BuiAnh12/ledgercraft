@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -11,6 +11,15 @@ DWH_DSN = os.getenv("DWH_DSN", "postgresql://dwh:dwh_password@dwh-postgres:5432/
 OLTP_DSN = os.getenv("OLTP_DSN", "postgresql://app:app_password@oltp-postgres:5432/ledgercraft_oltp")
 API_PORT = int(os.getenv("READ_API_PORT", "8002"))
 ALLOWED_ORIGINS = os.getenv("READ_API_CORS", "http://localhost:3000").split(",")
+API_KEY = os.getenv("READ_API_KEY", "")
+
+async def require_api_key(x_api_key: str | None = Header(None, alias="X-API-Key")):
+    if not API_KEY:
+        # don't proceed if server isn't configured
+        raise HTTPException(status_code=500, detail="Server API key not configured")
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return True
 
 app = FastAPI(title="LedgerCraft Read API", version="1.0.0")
 
@@ -57,7 +66,7 @@ def oltp_conn():
 def healthz():
     return {"ok": True}
 
-@app.get("/gmv/daily", response_model=List[GMVPoint])
+@app.get("/gmv/daily", response_model=List[GMVPoint], dependencies=[Depends(require_api_key)])
 def gmv_daily(currency: str = Query("VND", min_length=3, max_length=3), days: int = Query(30, ge=1, le=365)):
     """
     Returns last N days GMV from materialized view cur.mv_gmv_daily_currency for a given currency.
@@ -76,7 +85,7 @@ def gmv_daily(currency: str = Query("VND", min_length=3, max_length=3), days: in
         rows = cur.fetchall()
         return [GMVPoint(day_utc=r[0], currency=r[1], tx_count=r[2], total_amount=r[3]) for r in rows]
 
-@app.get("/merchants/top", response_model=List[MerchantRow])
+@app.get("/merchants/top", response_model=List[MerchantRow], dependencies=[Depends(require_api_key)])
 def merchants_top(limit: int = Query(10, ge=1, le=100)):
     """
     Top merchants by total amount (7d) from cur.mv_top_merchants_7d.
@@ -100,7 +109,7 @@ def merchants_top(limit: int = Query(10, ge=1, le=100)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"/merchants/top failed: {e}")
 
-@app.get("/risk/flags", response_model=List[RiskFlag])
+@app.get("/risk/flags", response_model=List[RiskFlag], dependencies=[Depends(require_api_key)])
 def risk_flags(hours: int = Query(1, ge=1, le=24)):
     """
     Recent risk flags from OLTP (near real-time). Default: last 1 hour.
