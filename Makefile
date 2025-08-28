@@ -84,9 +84,13 @@ migrate-dwh-mviews:
 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
 	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -v ON_ERROR_STOP=1 -f /app/warehouse/ddl/dwh_mviews.sql
 
+# refresh-mv:
+# 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
+# 	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -c "REFRESH MATERIALIZED VIEW CONCURRENTLY cur.mv_gmv_daily_currency; REFRESH MATERIALIZED VIEW cur.mv_top_merchants_7d;"
+# REMOVE CONCURENTLY
 refresh-mv:
 	@set -a; [ -f $(ENV) ] && . $(ENV); set +a; \
-	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -c "REFRESH MATERIALIZED VIEW CONCURRENTLY cur.mv_gmv_daily_currency; REFRESH MATERIALIZED VIEW cur.mv_top_merchants_7d;"
+	docker exec -i lc-dwh-postgres psql -U $$DWH_USER -d $$DWH_DB -c "REFRESH MATERIALIZED VIEW cur.mv_gmv_daily_currency; REFRESH MATERIALIZED VIEW cur.mv_top_merchants_7d;"
 
 # Migrate full db service
 migrate-oltp-full:

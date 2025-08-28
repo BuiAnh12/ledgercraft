@@ -88,5 +88,10 @@ else
   fi
 fi
 
+# This is beacuse air flow need to run init service first to create database and structure for other service. When this run successfully it will turn down 
+# Other services when it haven't init, will fail -> need to re-run to make sure it up nice and clean 
+echo "=== 6. Role Back Air flow ==="
+make up
+
 echo "=== 7. Starting ingest service ==="
 make ingest

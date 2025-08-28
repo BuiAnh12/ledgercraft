@@ -276,6 +276,25 @@ services:
       - ../pipelines/airflow/plugins:/opt/airflow/plugins
       - ../gx:/opt/airflow/dags/great_expectations
       - ../warehouse/ddl/dwh_curated_functions.sql:/opt/airflow/sql/dwh_curated_functions.sql
+  
+  read-api:
+    image: python:3.11-slim
+    container_name: lc-read-api
+    working_dir: /app/services/read_api
+    command: bash -lc "pip install -r requirements.txt && uvicorn app:app --host 0.0.0.0 --port ${READ_API_PORT}"
+    environment:
+      READ_API_PORT: ${READ_API_PORT}
+      READ_API_CORS: "http://localhost:3000"  # Next.js dev origin
+      DWH_DSN: postgresql://${DWH_USER}:${DWH_PASSWORD}@lc-dwh-postgres:5432/${DWH_DB} # behind the screen it run the same inside port like oltp
+      OLTP_DSN: postgresql://${OLTP_USER}:${OLTP_PASSWORD}@oltp-postgres:${OLTP_PORT}/${OLTP_DB}
+    depends_on:
+      - dwh-postgres
+      - oltp-postgres
+    volumes:
+      - ../:/app
+    ports:
+      - "${READ_API_PORT}:${READ_API_PORT}"
+
 
 volumes:
   oltp_pgdata:

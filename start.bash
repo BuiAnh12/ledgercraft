@@ -7,22 +7,6 @@ REQUIRED_TABLES=("accounts" "outbox" "customers" "idempotency" "transactions" "r
 echo "=== 1. Bringing up docker compose stack ==="
 make up
 
-echo "=== 2. Checking OLTP schema in Postgres ==="
-missing_tables=()
-for table in "${REQUIRED_TABLES[@]}"; do
-  if ! make psql-oltp-nonint SQL="SELECT to_regclass('public.$table');" | grep -q "$table"; then
-    missing_tables+=("$table")
-  fi
-done
-
-if [ ${#missing_tables[@]} -gt 0 ]; then
-  echo "Missing tables: ${missing_tables[*]}"
-  echo "=== 3. Running OLTP migrations ==="
-  make migrate-oltp
-else
-  echo "All required tables exist. Skipping migration."
-fi
-
 echo "=== 4. Creating Kafka risk.flags topic ==="
 make topic-create-flag || true
 
